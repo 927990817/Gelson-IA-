@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gelson IA 2.0 – Estúdio de IA em tempo real</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0b0f1c, #03050a);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(12, 18, 30, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #fff, #a0b0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge {
+            background: #1e2a3e;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #90ffb0;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .camera-area {
+            background: #000;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .video-wrapper {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        canvas {
+            pointer-events: none;
+        }
+        .controls-bottom {
+            padding: 1rem;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: #0f1422;
+            border-top: 1px solid #2a3458;
+        }
+        button {
+            background: #1e2a3e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        button.primary {
+            background: #4f46e5;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+        }
+        button.primary:hover { background: #6366f1; }
+        .right-panel {
+            background: rgba(8, 12, 22, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid #2a3458;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .section {
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.7rem;
+            color: #b9d0ff;
+            border-left: 3px solid #4f46e5;
+            padding-left: 10px;
+        }
+        .toggle-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .toggle-item {
+            background: #111827;
+            border-radius: 40px;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            color: #a0b3d9;
+        }
+        input[type="range"] {
+            width: 100%;
+            background: #1f2a40;
+            height: 4px;
+            border-radius: 5px;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            background: #111827;
+            border: 1px solid #334155;
+            border-radius: 2rem;
+            color: white;
+            margin-top: 6px;
+        }
+        .assistant-card {
+            background: #0b1022;
+            border-radius: 1rem;
+            padding: 0.8rem;
+            border-left: 4px solid #22c55e;
+            margin-top: 12px;
+        }
+        #suggestionText {
+            font-size: 0.85rem;
+            color: #e2e8f0;
+        }
+        .error-msg {
+            background: #7f1a1a;
+            color: #ffc9c9;
+            padding: 8px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+        @media (max-width: 800px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .right-panel { max-height: none; }
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #6c7a9e;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>🎥 Gelson IA <span style="font-size: 0.9rem;">2.0 · Estúdio IA</span></h1>
+        <div class="badge">🔴 Efeitos em tempo real</div>
+    </div>
+
+    <div class="main-grid">
+        <div class="camera-area">
+            <div class="video-wrapper">
+                <video id="video" autoplay playsinline muted></video>
+                <canvas id="canvas"></canvas>
+            </div>
+            <div class="controls-bottom">
+                <button id="recordBtn" class="primary">🔴 GRAVAR</button>
+                <button id="stopBtn" disabled>⏹️ PARAR</button>
+                <button id="downloadBtn" disabled>💾 EXPORTAR</button>
+            </div>
+            <div id="errorMsg" class="error-msg" style="display: none;"></div>
+        </div>
+
+        <div class="right-panel">
+            <div class="section">
+                <div class="section-title">✨ CORREÇÕES INTELIGENTES</div>
+                <div class="toggle-group">
+                    <label class="toggle-item"><input type="checkbox" id="fixLight" checked> 💡 Auto Iluminação</label>
+                    <label class="toggle-item"><input type="checkbox" id="skinSmooth"> 🧴 Limpeza de pele</label>
+                    <label class="toggle-item"><input type="checkbox" id="bgEffect"> 🖼️ Fundo inteligente</label>
+                </div>
+                <div class="slider-label"><span>🎚️ Intensidade geral</span><span id="intensityVal">60%</span></div>
+                <input type="range" id="intensity" min="0" max="100" value="60">
+            </div>
+
+            <div class="section">
+                <div class="section-title">🎭 FUNDO & CENÁRIO</div>
+                <select id="bgSelect">
+                    <option value="off">🔘 Nenhum (original)</option>
+                    <option value="blur">🌀 Desfoque suave</option>
+                    <option value="color">🎨 Fundo colorido</option>
+                    <option value="image">🖼️ Imagem personalizada</option>
+                </select>
+                <input type="text" id="bgImageUrl" placeholder="URL da imagem de fundo (ex: https://exemplo.com/fundo.jpg)" style="display:none;">
+                <div style="margin-top: 8px;">
+                    <label class="toggle-item"><input type="checkbox" id="removeObjects"> 🧹 Remover distrações (beta)</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🎬 EFEITOS & FILTROS</div>
+                <select id="styleFilter">
+                    <option value="nenhum">📸 Normal</option>
+                    <option value="cinematic">🎬 Cinematográfico</option>
+                    <option value="cool">❄️ Frio</option>
+                    <option value="vintage">📀 Vintage</option>
+                    <option value="dramatic">🌙 Dramático</option>
+                </select>
+                <div class="toggle-group">
+                    <label class="toggle-item"><input type="checkbox" id="addGlasses"> 🕶️ Adicionar óculos</label>
+                    <label class="toggle-item"><input type="checkbox" id="addHat"> 🧢 Chapéu virtual</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🤖 ASSISTENTE IA</div>
+                <button id="speakBtn" style="background:#2d3a5e; width:100%;">🔊 FALAR DICA</button>
+                <div class="assistant-card">
+                    <div>💡 <strong>Sugestão ativa</strong></div>
+                    <div id="suggestionText">Analisando cenário...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>⚡ Gelson IA 2.0 – Fundo, limpeza e objetos virtuais. Necessário permitir câmera/mic.</footer>
+</div>
+
+<script>
+    (function(){
+        // Elementos
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fixLight = document.getElementById('fixLight');
+        const skinSmooth = document.getElementById('skinSmooth');
+        const bgEffect = document.getElementById('bgEffect');
+        const intensitySlider = document.getElementById('intensity');
+        const intensityVal = document.getElementById('intensityVal');
+        const bgSelect = document.getElementById('bgSelect');
+        const bgImageUrl = document.getElementById('bgImageUrl');
+        const removeObjects = document.getElementById('removeObjects');
+        const styleFilter = document.getElementById('styleFilter');
+        const addGlasses = document.getElementById('addGlasses');
+        const addHat = document.getElementById('addHat');
+        const speakBtn = document.getElementById('speakBtn');
+        const suggestionDiv = document.getElementById('suggestionText');
+        const errorDiv = document.getElementById('errorMsg');
+
+        let stream = null;
+        let animationId = null;
+        let recordedChunks = [];
+        let mediaRecorder = null;
+        let canvasStream = null;
+        let isRecording = false;
+        let backgroundImage = new Image();
+        let customBgLoaded = false;
+
+        // Configurações
+        intensitySlider.oninput = () => { intensityVal.innerText = intensitySlider.value+'%'; };
+        bgSelect.onchange = () => {
+            bgImageUrl.style.display = bgSelect.value === 'image' ? 'block' : 'none';
+            if(bgSelect.value === 'image' && bgImageUrl.value) loadCustomBackground(bgImageUrl.value);
+        };
+        bgImageUrl.onchange = () => loadCustomBackground(bgImageUrl.value);
+
+        function loadCustomBackground(url){
+            if(!url) return;
+            backgroundImage.src = url;
+            backgroundImage.onload = () => { customBgLoaded = true; };
+            backgroundImage.onerror = () => { customBgLoaded = false; showError("Fundo não carregou"); };
+        }
+
+        function showError(msg){
+            errorDiv.innerText = '⚠️ ' + msg;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 4000);
+        }
+
+        // Processamento de frame com efeitos avançados (segmentação de fundo simulada + correções)
+        async function processFrame(){
+            if(!video.videoWidth || !video.videoHeight){
+                animationId = requestAnimationFrame(processFrame);
+                return;
+            }
+            if(canvas.width !== video.videoWidth || canvas.height !== video.videoHeight){
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imgData.data;
+            let intensity = parseInt(intensitySlider.value)/100;
+
+            // Correção de iluminação
+            if(fixLight.checked){
+                for(let i=0; i<data.length; i+=4){
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    let brightness = 0.25 * intensity;
+                    let contrast = 1 + (0.3*intensity);
+                    r = ((r-128)*contrast)+128 + brightness*40;
+                    g = ((g-128)*contrast)+128 + brightness*40;
+                    b = ((b-128)*contrast)+128 + brightness*40;
+                    data[i] = Math.min(255,Math.max(0,r));
+                    data[i+1] = Math.min(255,Math.max(0,g));
+                    data[i+2] = Math.min(255,Math.max(0,b));
+                }
+            }
+
+            // Suavização da pele (efeito "limpeza")
+            if(skinSmooth.checked){
+                let smooth = 0.3 * intensity;
+                for(let i=0; i<data.length; i+=4){
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    let avg = (r+g+b)/3;
+                    data[i] = r*(1-smooth) + avg*smooth;
+                    data[i+1] = g*(1-smooth) + avg*smooth;
+                    data[i+2] = b*(1-smooth) + avg*smooth;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // Efeito de fundo (simulação com máscara simples – para demo real usaríamos MediaPipe)
+            if(bgEffect.checked && bgSelect.value !== 'off'){
+                // Obtém dados do canvas após correções
+                let frame = ctx.getImageData(0,0,canvas.width,canvas.height);
+                let pixels = frame.data;
+                // Simples segmentação baseada em cor central (não precisa ser exata para MVP)
+                // Vamos desenhar um retângulo de fundo simulado e mesclar?
+                // Para manter desempenho, vamos aplicar um efeito de desfoque ou cor atrás da pessoa (fake depth)
+                // Como é só demonstração, aplicamos um overlay de cor ou desfoque no perímetro.
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                if(bgSelect.value === 'blur'){
+                    ctx.fillStyle = 'rgba(100,100,150,0.4)';
+                    ctx.fillRect(0,0,canvas.width,canvas.height);
+                } else if(bgSelect.value === 'color'){
+                    ctx.fillStyle = '#2d4a6e';
+                    ctx.fillRect(0,0,canvas.width,canvas.height);
+                    ctx.globalCompositeOperation = 'destination-atop';
+                    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                } else if(bgSelect.value === 'image' && customBgLoaded){
+                    ctx.drawImage(backgroundImage,0,0,canvas.width,canvas.height);
+                    ctx.globalCompositeOperation = 'destination-atop';
+                    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                }
+                ctx.restore();
+            }
+
+            // Filtros de estilo (overlay)
+            let style = styleFilter.value;
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            if(style === 'cinematic') ctx.fillStyle = 'rgba(255,180,40,0.15)';
+            else if(style === 'cool') ctx.fillStyle = 'rgba(0,150,255,0.12)';
+            else if(style === 'vintage') ctx.fillStyle = 'rgba(210,150,80,0.2)';
+            else if(style === 'dramatic') ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            if(style !== 'nenhum') ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.restore();
+
+            // Adicionar objetos virtuais (óculos, chapéu) – placeholders desenhados
+            if(addGlasses.checked){
+                ctx.beginPath();
+                ctx.arc(canvas.width*0.4, canvas.height*0.45, canvas.width*0.08, 0, 2*Math.PI);
+                ctx.arc(canvas.width*0.6, canvas.height*0.45, canvas.width*0.08, 0, 2*Math.PI);
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(canvas.width*0.48, canvas.height*0.45);
+                ctx.lineTo(canvas.width*0.52, canvas.height*0.45);
+                ctx.stroke();
+            }
+            if(addHat.checked){
+                ctx.fillStyle = '#4a3728';
+                ctx.fillRect(canvas.width*0.35, canvas.height*0.2, canvas.width*0.3, canvas.height*0.08);
+                ctx.fillRect(canvas.width*0.45, canvas.height*0.12, canvas.width*0.1, canvas.height*0.1);
+            }
+
+            // Simular dicas de IA
+            if(Math.random() < 0.03){
+                const tips = ["🧠 Vire o rosto para a luz", "🎯 Centralize o queixo", "🎨 Ative o filtro cinematográfico", "✨ Suavização ativa melhora a pele"];
+                suggestionDiv.innerText = tips[Math.floor(Math.random()*tips.length)];
+            }
+            animationId = requestAnimationFrame(processFrame);
+        }
+
+        // Inicializar câmera
+        async function initCamera(){
+            try{
+                if(stream) stream.getTracks().forEach(t=>t.stop());
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = stream;
+                await video.play();
+                if(animationId) cancelAnimationFrame(animationId);
+                animationId = requestAnimationFrame(processFrame);
+                recordBtn.disabled = false;
+            } catch(e){
+                showError("Câmera não acessada: "+e.message);
+            }
+        }
+        initCamera();
+
+        // Gravação
+        async function startRecording(){
+            if(!stream){ showError("Câmera não ativa"); return; }
+            try{
+                if(canvas.captureStream){
+                    canvasStream = canvas.captureStream(30);
+                    let audioTrack = stream.getAudioTracks()[0];
+                    if(audioTrack) canvasStream.addTrack(audioTrack.clone());
+                    recordedChunks = [];
+                    mediaRecorder = new MediaRecorder(canvasStream);
+                    mediaRecorder.ondataavailable = e => { if(e.data.size) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        let blob = new Blob(recordedChunks, {type:'video/webm'});
+                        let url = URL.createObjectURL(blob);
+                        let a = document.createElement('a');
+                        a.href = url;
+                        a.download = `gelson_ia_${Date.now()}.webm`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        downloadBtn.disabled = false;
+                        recordBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        isRecording=false;
+                    };
+                    mediaRecorder.start(1000);
+                    isRecording = true;
+                    recordBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    downloadBtn.disabled = true;
+                } else { showError("Gravação com efeitos não suportada neste navegador"); }
+            } catch(e){ showError("Erro gravação: "+e.message); }
+        }
+        function stopRecording(){
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            if(canvasStream) canvasStream.getTracks().forEach(t=>t.stop());
+            isRecording=false;
+            recordBtn.disabled=false;
+            stopBtn.disabled=true;
+        }
+        recordBtn.onclick = startRecording;
+        sto
